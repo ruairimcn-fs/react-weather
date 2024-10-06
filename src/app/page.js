@@ -18,24 +18,40 @@ import styles from "/src/app/page.module.css";
 
 const App = () => {
 
-  const [cityInput, setCityInput] = useState("Riga");
+  const [cityInput, setCityInput] = useState("");
   const [triggerFetch, setTriggerFetch] = useState(true);
   const [weatherData, setWeatherData] = useState();
   const [unitSystem, setUnitSystem] = useState("metric");
 
   useEffect(() => {
-    const getData = async () => {
-      const res = await fetch("api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cityInput }),
-      })
-      const data = await res.json();
-      setWeatherData({ ...data });
-      setCityInput("");
-    };
-    getData();
-  }, [triggerFetch]);
+    //Parse a URL param to get a city if it exists
+    const params = new URLSearchParams(window.location.search);
+    const city = params.get('city') || params.get("City");
+
+    if (city){
+      setCityInput(city);
+      setTriggerFetch(true);
+    } else {
+      setCityInput("Dublin, IE");
+      setTriggerFetch(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (triggerFetch) {
+      const getData = async () => {
+        const res = await fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cityInput }),
+        });
+        const data = await res.json();
+        setWeatherData({ ...data });
+        setTriggerFetch(false); // Reset the trigger
+      };
+      getData();
+    }
+  }, [triggerFetch, cityInput]);
 
 
   console.log(weatherData);
