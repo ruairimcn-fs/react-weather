@@ -1,95 +1,95 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+import { useState, useEffect } from "react";
+
+import { MainCard } from "./components/MainCard";
+import { ContentBox } from "./components/ContentBox";
+import { Header } from "./components/Header";
+import { DateAndTime } from "./components/DateAndTime"
+import { Search } from "./components/Search";
+import { MetricsBox } from "./components/MetricsBox";
+import { UnitSwitch } from "./components/UnitSwitch";
+import { LoadingScreen } from "./components/LoadingScreen";
+import { ErrorScreen } from "./components/ErrorScreen";
+
+
+
+import styles from "/src/app/page.module.css";
+
+const App = () => {
+
+  const [cityInput, setCityInput] = useState("Riga");
+  const [triggerFetch, setTriggerFetch] = useState(true);
+  const [weatherData, setWeatherData] = useState();
+  const [unitSystem, setUnitSystem] = useState("metric");
+
+  useEffect(() => {
+    const getData = async () => {
+      const res = await fetch("api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cityInput }),
+      })
+      const data = await res.json();
+      setWeatherData({ ...data });
+      setCityInput("");
+    };
+    getData();
+  }, [triggerFetch]);
+
+
+  console.log(weatherData);
+
+  const ChangeSystem = () =>
+    unitSystem == "metric"
+      ? setUnitSystem("imperial")
+      : setUnitSystem("metric");
+
+
+
+  return weatherData && !weatherData.message ? (
+    <div className={styles.wrapper}>
+      <MainCard
+        city={weatherData.name}
+        country={weatherData.sys.country}
+        description={weatherData.weather[0].description}
+        iconName={weatherData.weather[0].icon}
+        unitSystem={unitSystem}
+        weatherData={weatherData}
         />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      <ContentBox>
+        <Header>
+          <DateAndTime weatherData={weatherData} unitSystem={unitSystem} />
+          <Search
+            placeHolder="Search a city..."
+            value={cityInput}
+            onFocus={(e) => {
+              e.target.value = "";
+              e.target.placeholder = "";
+            }}
+            onChange={(e) => setCityInput(e.target.value)}
+            onKeyDown={(e) => {
+              e.keyCode === 13 && setTriggerFetch(!triggerFetch);
+              e.target.placeholder = "Search a city...";
+            }}
           />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </Header>
+        <MetricsBox weatherData={weatherData} unitSystem={unitSystem} />
+        <UnitSwitch onClick={ChangeSystem} unitSystem={unitSystem} />
+      </ContentBox>
     </div>
+   
+  ) : weatherData && weatherData.message ? (
+    <ErrorScreen errorMessage="City not found, try again!">
+        <Search 
+          onFocus={(e) => (e.target.value = "")}
+          onChange={(e) => setCityInput(e.target.value)}
+          onKeyDown={(e) => e.keyCode === 13 && setTriggerFetch(!triggerFetch)}
+          />
+    </ErrorScreen>
+  ) : (
+    <LoadingScreen loadingMessage="Loading data..."/>
   );
-}
+};
+
+export default App;

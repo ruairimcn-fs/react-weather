@@ -1,0 +1,14 @@
+.wrapper {
+    text-align: right;
+  }
+  .switch {
+    display: inline;
+    margin: 0 10px;
+    cursor: pointer;
+  }
+  .active {
+    color: green;
+  }
+  .inactive {
+    color: black;
+  }
